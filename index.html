@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Executive Financial & DRE Dashboard - Dark Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -21,7 +22,7 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
         .dashboard-container {
             max-width: 1400px;
@@ -32,14 +33,16 @@
             justify-content: space-between;
             align-items: center;
             background: var(--card-bg);
-            padding: 20px 30px;
+            padding: 20px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         header h1 {
             margin: 0;
-            font-size: 22px;
+            font-size: 20px;
             color: var(--text-primary);
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
             -webkit-background-clip: text;
@@ -47,19 +50,39 @@
         }
         header p {
             margin: 5px 0 0 0;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
+        .view-toggle-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .toggle-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent-blue);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .toggle-btn.active, .toggle-btn:hover {
+            background: var(--accent-blue);
+            color: #0d1117;
+        }
+        
         .grid-container {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
+            gap: 15px;
         }
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .kpi-card {
@@ -84,17 +107,17 @@
         .kpi-green::after { background: var(--accent-green); }
 
         .kpi-title {
-            font-size: 13px;
+            font-size: 11px;
             color: var(--text-secondary);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .kpi-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-top: 10px;
+            margin-top: 8px;
         }
         .chart-main {
             grid-column: span 8;
@@ -104,39 +127,47 @@
         }
         .chart-container {
             position: relative;
-            height: 300px;
+            height: 280px;
             width: 100%;
         }
         .card-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             color: var(--text-primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
+
+        body.mobile-mode .kpi-card {
+            grid-column: span 12 !important;
+        }
+        body.mobile-mode .chart-main, body.mobile-mode .chart-side {
+            grid-column: span 12 !important;
+        }
+
         @media (max-width: 1024px) {
             .kpi-card { grid-column: span 6; }
             .chart-main, .chart-side { grid-column: span 12; }
         }
+        @media (max-width: 600px) {
+            .kpi-card { grid-column: span 12; }
+        }
     </style>
 </head>
-<body>
+<body id="bodyTag">
 
 <div class="dashboard-container">
     <header>
         <div>
             <h1>Executive Financial & DRE Dashboard</h1>
-            <p>Análise de Desempenho (Janeiro a Agosto de 2026) | Regime de Caixa (Baixa) & Negociação</p>
+            <p>Análise de Desempenho (Janeiro a Agosto de 2026) | Regime de Caixa & Negociação</p>
         </div>
-        <div style="font-size: 13px; color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); padding: 8px 15px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.3);">
-            ● Status: Ativo (Analista Data)
+        <div class="view-toggle-btns">
+            <button class="toggle-btn active" onclick="setViewMode('pc', this)">🖥️ Visão PC</button>
+            <button class="toggle-btn" onclick="setViewMode('mobile', this)">📱 Visão Mobile</button>
         </div>
     </header>
 
     <div class="grid-container">
-        <!-- KPIs -->
         <div class="card kpi-card kpi-blue">
             <span class="kpi-title">Receita Bruta Total</span>
             <div class="kpi-value">R$ 561.450</div>
@@ -154,7 +185,6 @@
             <div class="kpi-value">36,06%</div>
         </div>
 
-        <!-- Gráfico Principal -->
         <div class="card chart-main">
             <div class="card-title">
                 Evolução Mensal: Receitas (Negociação) vs Despesas (Caixa)
@@ -164,7 +194,6 @@
             </div>
         </div>
 
-        <!-- Gráfico Lateral -->
         <div class="card chart-side">
             <div class="card-title">
                 Distribuição por Categoria
@@ -177,6 +206,18 @@
 </div>
 
 <script>
+    function setViewMode(mode, btn) {
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const body = document.getElementById('bodyTag');
+        if(mode === 'mobile') {
+            body.classList.add('mobile-mode');
+        } else {
+            body.classList.remove('mobile-mode');
+        }
+    }
+
     const ctxMain = document.getElementById('mainEvolutionChart').getContext('2d');
     new Chart(ctxMain, {
         type: 'bar',
@@ -192,7 +233,7 @@
                     borderRadius: 4
                 },
                 {
-                    label: 'Despesas Totais (Baixa)',
+                    label: 'Despesas Totais (Caixa)',
                     data: [45000, 36900, 44400, 51100, 40900, 48700, 38900, 53100],
                     backgroundColor: 'rgba(244, 114, 182, 0.6)',
                     borderColor: '#f472b6',
@@ -247,3 +288,4 @@
 
 </body>
 </html>
+
